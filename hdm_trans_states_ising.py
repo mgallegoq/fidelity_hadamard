@@ -52,19 +52,19 @@ SUB_RNG: int = 12345
 m_subset: int = 2**N # All
 subset_mode: str = "top"
 subset_rng: int = 12345
+masks = 'w2'
 
 # Load masks
-# masks_w1: NDArray[np.int_] = weight1_masks(N)
-# masks_w2: NDArray[np.int_] = weight2_masks(N)
-# masks_w3: NDArray[np.int_] = weight3_masks(N)
-# masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=True, rng=SUB_RNG)
-# masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
-# masks_idx: NDArray[np.intp] = masks_to_indices(masks_all)
+masks_w1: NDArray[np.int_] = weight1_masks(N)
+masks_w2: NDArray[np.int_] = weight2_masks(N)
+masks_w3: NDArray[np.int_] = weight3_masks(N)
+masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=True, rng=SUB_RNG)
+masks_all: NDArray[np.int_] = np.vstack((masks_w2))
 
-masks_all: NDArray[np.int_] = all_masks(N)
+# masks_all: NDArray[np.int_] = all_masks(N)
 masks_idx: NDArray[np.intp] = masks_to_indices(masks_all)
+
 # === LOOP ===
-h: float
 for h in tqdm(H_LIST):
     state_name: str = f"N{N}_h{h}_ising.npy"
     psi: NDArray[np.complex128] = np.load(STATES_DIR / state_name)
@@ -83,4 +83,4 @@ for h in tqdm(H_LIST):
         states_idx, probs, masks_idx_uint64
     )
 
-    np.save(HADAMARD_DIR / f"N{N}_h{h}_ising_full.npy", phi_hadamard)
+    np.save(HADAMARD_DIR / f"N{N}_h{h}_ising_{masks}.npy", phi_hadamard)
