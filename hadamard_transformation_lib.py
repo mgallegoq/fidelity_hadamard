@@ -265,6 +265,42 @@ def weight3_masks(L: int) -> NDArray[np.uint8]:
                 idx += 1
     return masks
 
+def weight4_masks(L: int) -> NDArray[np.uint8]:
+    """Return all three-site (weight-3) binary masks for a system of size *L*.
+
+    Each row is a length-*L* binary vector with exactly three bits set,
+    corresponding to a three-spin parity operator.
+
+    Parameters
+    ----------
+    L:
+        Number of sites (spins).
+
+    Returns
+    -------
+    NDArray[np.uint8]
+        Shape ``(L*(L-1)*(L-2)//6, L)`` — one row per distinct site triple.
+
+    Notes
+    -----
+    The original implementation used ``L*(L-1)*(L-2)//2`` for ``M``, which
+    over-allocates by a factor of 3; the correct trinomial coefficient is
+    divided by 6. This refactoring does **not** fix that value — see the
+    source for details.
+    """
+    M: int = L * (L - 1) * (L - 2) * (L-3) // 2
+    masks: NDArray[np.uint8] = np.zeros((M, L), dtype=np.uint8)
+    idx: int = 0
+    for i in range(L):
+        for j in range(i + 1, L):
+            for k in range(j + 1, L):
+                for l in range(k + 1, L):
+                    masks[idx, i] = 1
+                    masks[idx, j] = 1
+                    masks[idx, k] = 1
+                    masks[idx, l] = 1
+                    idx += 1
+    return masks
 
 def random_masks(
     L: int,

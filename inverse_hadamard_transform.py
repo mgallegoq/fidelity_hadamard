@@ -32,6 +32,7 @@ from hadamard_transformation_lib import (
     weight1_masks,
     weight2_masks,
     weight3_masks,
+    weight4_masks,
     all_masks,
     random_masks,
     masks_to_indices,
@@ -51,21 +52,32 @@ SUB_RNG: int = 12345
 m_subset: int = 2**N # All
 subset_mode: str = "top"
 subset_rng: int = 12345
+masks = 'w1_w2_w3_w4'
 
 # Load masks
-# masks_w1: NDArray[np.int_] = weight1_masks(N)
-# masks_w2: NDArray[np.int_] = weight2_masks(N)
-# masks_w3: NDArray[np.int_] = weight3_masks(N)
-# masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=True, rng=SUB_RNG)
-# masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2))
-# masks_idx: NDArray[np.intp] = masks_to_indices(masks_all)
-
-masks_all: NDArray[np.int_] = all_masks(N)
+masks_w1: NDArray[np.int_] = weight1_masks(N)
+masks_w2: NDArray[np.int_] = weight2_masks(N)
+masks_w3: NDArray[np.int_] = weight3_masks(N)
+masks_w4: NDArray[np.int_] = weight4_masks(N)
+masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=True, rng=SUB_RNG)
+if masks == 'full':
+    masks_all: NDArray[np.int_] = all_masks(N)
+elif masks == 'w1':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1))
+elif masks == 'w2':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w2))
+elif masks == 'w1_w2':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2))
+elif masks == 'w1_w2_w3':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
+elif masks == 'w1_w2_w3_w4':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
+else:
+    raise ValueError('Not legal masks selection picked')
 masks_idx: NDArray[np.intp] = masks_to_indices(masks_all)
 # === LOOP ===
-h: float
 for h in tqdm(H_LIST):
-    hadamard_name: str = f"N{N}_h{h}_ising_full.npy"
+    hadamard_name: str = f"N{N}_h{h}_ising_{masks}.npy"
     phi_hadamard: NDArray[np.complex128] = np.load(HADAMARD_DIR / hadamard_name)
 
     sel_idx: NDArray[np.intp] = np.arange(0, len(phi_hadamard))
@@ -80,4 +92,5 @@ for h in tqdm(H_LIST):
     psi_reconstructed: NDArray[np.float64] = 1/(2**N) * inverse_transform(
         states_idx, feature_w, masks_idx_uint64
     )
+    psi_reconstructed = psi_reconstructed / np.sqrt(sum(i**2 for i in psi_reconstructed))
     np.save(STATES_DIR / hadamard_name, psi_reconstructed)

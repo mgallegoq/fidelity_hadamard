@@ -25,4 +25,3 @@ for i, _ in tqdm(enumerate(H_LIST[:-1])):
     psi_2 = psi_2 / np.sqrt(sum(element ** 2 for element in psi_2))
     fidelities.append((psi @ psi_2.T)**2)
 np.save(SAVE_DIR / f'fidelities_N{N}_{masks}.npy', np.array(fidelities))
-print(fidelities)

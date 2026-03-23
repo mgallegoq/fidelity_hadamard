@@ -32,6 +32,7 @@ from hadamard_transformation_lib import (
     weight1_masks,
     weight2_masks,
     weight3_masks,
+    weight4_masks,
     random_masks,
     all_masks,
     masks_to_indices,
@@ -52,16 +53,29 @@ SUB_RNG: int = 12345
 m_subset: int = 2**N # All
 subset_mode: str = "top"
 subset_rng: int = 12345
-masks = 'w2'
+masks = 'w1_w2_w3_w4'
 
 # Load masks
 masks_w1: NDArray[np.int_] = weight1_masks(N)
 masks_w2: NDArray[np.int_] = weight2_masks(N)
 masks_w3: NDArray[np.int_] = weight3_masks(N)
+masks_w4: NDArray[np.int_] = weight4_masks(N)
 masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=True, rng=SUB_RNG)
-masks_all: NDArray[np.int_] = np.vstack((masks_w2))
+if masks == 'full':
+    masks_all: NDArray[np.int_] = all_masks(N)
+elif masks == 'w1':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1))
+elif masks == 'w2':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w2))
+elif masks == 'w1_w2':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2))
+elif masks == 'w1_w2_w3':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
+elif masks == 'w1_w2_w3_w4':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
+else:
+    raise ValueError('Not legal masks selection picked')
 
-# masks_all: NDArray[np.int_] = all_masks(N)
 masks_idx: NDArray[np.intp] = masks_to_indices(masks_all)
 
 # === LOOP ===
