@@ -36,7 +36,6 @@ from hadamard_transformation_lib import (
     weight3_masks,
     weight4_masks,
     all_masks,
-    random_masks,
     masks_to_indices,
     inverse_transform
 )
@@ -63,8 +62,10 @@ masks_w1: NDArray[np.int_] = weight1_masks(N)
 masks_w2: NDArray[np.int_] = weight2_masks(N)
 masks_w3: NDArray[np.int_] = weight3_masks(N)
 masks_w4: NDArray[np.int_] = weight4_masks(N)
-masks_rand: NDArray[np.int_] = np.load(f"../random_masks/random_masks_{int(_random_match.group(1))}.npy")
-
+try:
+    masks_rand: NDArray[np.int_] = np.load(f"../random_masks/random_masks_{int(_random_match.group(1))}.npy")
+except AttributeError:
+    pass
 _MASK_COMPONENTS: dict[str, NDArray[np.int_]] = {
     "w1": masks_w1,
     "w2": masks_w2,

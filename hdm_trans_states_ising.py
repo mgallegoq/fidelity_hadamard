@@ -66,7 +66,10 @@ masks_w2: NDArray[np.int_] = weight2_masks(N)
 masks_w3: NDArray[np.int_] = weight3_masks(N)
 masks_w4: NDArray[np.int_] = weight4_masks(N)
 masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=False, rng=SUB_RNG)
-np.save(f"../random_masks/random_masks_{int(_random_match.group(1))}.npy", masks_rand)
+try:
+    np.save(f"../random_masks/random_masks_{int(_random_match.group(1))}.npy", masks_rand)
+except AttributeError:
+    pass
 
 _MASK_COMPONENTS: dict[str, NDArray[np.int_]] = {
     "w1": masks_w1,
