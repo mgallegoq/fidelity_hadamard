@@ -52,7 +52,7 @@ SUB_RNG: int = 12345
 m_subset: int = 2**N # All
 subset_mode: str = "top"
 subset_rng: int = 12345
-masks = 'w1_w2_w3_w4'
+masks = str(sys.argv[2])
 
 # Load masks
 masks_w1: NDArray[np.int_] = weight1_masks(N)
@@ -66,31 +66,33 @@ elif masks == 'w1':
     masks_all: NDArray[np.int_] = np.vstack((masks_w1))
 elif masks == 'w2':
     masks_all: NDArray[np.int_] = np.vstack((masks_w2))
+elif masks == 'w3':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w3))
+elif masks == 'w4':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w4))
 elif masks == 'w1_w2':
     masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2))
+elif masks == 'w2_w4':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w2, masks_w4))
 elif masks == 'w1_w2_w3':
     masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
 elif masks == 'w1_w2_w3_w4':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3, masks_w4))
 else:
     raise ValueError('Not legal masks selection picked')
 masks_idx: NDArray[np.intp] = masks_to_indices(masks_all)
 # === LOOP ===
 for h in tqdm(H_LIST):
     hadamard_name: str = f"N{N}_h{h}_ising_{masks}.npy"
-    phi_hadamard: NDArray[np.complex128] = np.load(HADAMARD_DIR / hadamard_name)
+    phi_hadamard: NDArray[np.float64] = np.load(HADAMARD_DIR / hadamard_name)
 
-    sel_idx: NDArray[np.intp] = np.arange(0, len(phi_hadamard))
-    stat_idx: NDArray[np.intp] = np.arange(0, 2**N)
-
-    # Compute probs for those indices (exact)
-    feature_w: NDArray[np.float64] = phi_hadamard[sel_idx]
-    states_idx: NDArray[np.uint64] = stat_idx.astype(np.uint64)
+    states_idx: NDArray[np.uint64] = np.arange(2**N, dtype=np.uint64)
     masks_idx_uint64: NDArray[np.uint64] = masks_idx.astype(np.uint64)
 
-    # Compute parity features over subset using Numba
-    psi_reconstructed: NDArray[np.float64] = 1/(2**N) * inverse_transform(
-        states_idx, feature_w, masks_idx_uint64
+    # Inverse Hadamard transform — note: inverse_transform out-size bug must be fixed first
+    psi_reconstructed: NDArray[np.float64] = (
+        inverse_transform(states_idx, phi_hadamard, masks_idx_uint64) / 2**N
     )
-    psi_reconstructed = psi_reconstructed / np.sqrt(sum(i**2 for i in psi_reconstructed))
+    psi_reconstructed = psi_reconstructed / np.linalg.norm(psi_reconstructed)
+
     np.save(STATES_DIR / hadamard_name, psi_reconstructed)

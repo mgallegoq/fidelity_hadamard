@@ -7,8 +7,8 @@ This module provides:
   ``inverse_transform`` for computing forward and inverse parity (Hadamard)
   features over a subset of basis states.
 - **Mask generators** — ``weight1_masks``, ``weight2_masks``,
-  ``weight3_masks``, and ``random_masks`` for constructing binary operator
-  masks of fixed or random Hamming weight.
+  ``weight3_masks``, ``weight4_masks``, ``all_masks``, and ``random_masks``
+  for constructing binary operator masks of fixed or random Hamming weight.
 - **Helpers** — ``masks_to_indices`` (binary-mask → integer bitmask) and
   ``select_subset_indices`` (basis-state selection by amplitude).
 
@@ -144,7 +144,7 @@ def inverse_transform(
     D: int = masks_idx.shape[0]
     out: NDArray[np.float64] = np.zeros(m, dtype=np.float64)
 
-    for j in range(m):
+    for j in prange(m):
         state: np.uint64 = states_idx[j]
         acc: float = 0.0
         for i in range(D):
@@ -160,6 +160,7 @@ def inverse_transform(
 # ---------------------------------------------------------------------------
 # Mask generators
 # ---------------------------------------------------------------------------
+
 def all_masks(L: int) -> NDArray[np.uint8]:
     """Return all 2**L binary masks for a system of size *L*.
 
@@ -178,9 +179,12 @@ def all_masks(L: int) -> NDArray[np.uint8]:
         Shape ``(2**L, L)`` — all binary masks, one per row.
     """
     M: int = 2**L
-    indices: NDArray[np.intp] = np.arange(M, dtype=np.uint64)
-    bits: NDArray[np.uint8] = ((indices[:, None] >> np.arange(L, dtype=np.uint64)) & 1).astype(np.uint8)
+    indices: NDArray[np.uint64] = np.arange(M, dtype=np.uint64)
+    bits: NDArray[np.uint8] = (
+        (indices[:, None] >> np.arange(L, dtype=np.uint64)) & np.uint64(1)
+    ).astype(np.uint8)
     return bits
+
 
 def weight1_masks(L: int) -> NDArray[np.uint8]:
     """Return all single-site (weight-1) binary masks for a system of size *L*.
@@ -245,15 +249,8 @@ def weight3_masks(L: int) -> NDArray[np.uint8]:
     -------
     NDArray[np.uint8]
         Shape ``(L*(L-1)*(L-2)//6, L)`` — one row per distinct site triple.
-
-    Notes
-    -----
-    The original implementation used ``L*(L-1)*(L-2)//2`` for ``M``, which
-    over-allocates by a factor of 3; the correct trinomial coefficient is
-    divided by 6. This refactoring does **not** fix that value — see the
-    source for details.
     """
-    M: int = L * (L - 1) * (L - 2) // 2
+    M: int = L * (L - 1) * (L - 2) // 6
     masks: NDArray[np.uint8] = np.zeros((M, L), dtype=np.uint8)
     idx: int = 0
     for i in range(L):
@@ -265,11 +262,12 @@ def weight3_masks(L: int) -> NDArray[np.uint8]:
                 idx += 1
     return masks
 
-def weight4_masks(L: int) -> NDArray[np.uint8]:
-    """Return all three-site (weight-3) binary masks for a system of size *L*.
 
-    Each row is a length-*L* binary vector with exactly three bits set,
-    corresponding to a three-spin parity operator.
+def weight4_masks(L: int) -> NDArray[np.uint8]:
+    """Return all four-site (weight-4) binary masks for a system of size *L*.
+
+    Each row is a length-*L* binary vector with exactly four bits set,
+    corresponding to a four-spin parity operator.
 
     Parameters
     ----------
@@ -279,28 +277,23 @@ def weight4_masks(L: int) -> NDArray[np.uint8]:
     Returns
     -------
     NDArray[np.uint8]
-        Shape ``(L*(L-1)*(L-2)//6, L)`` — one row per distinct site triple.
-
-    Notes
-    -----
-    The original implementation used ``L*(L-1)*(L-2)//2`` for ``M``, which
-    over-allocates by a factor of 3; the correct trinomial coefficient is
-    divided by 6. This refactoring does **not** fix that value — see the
-    source for details.
+        Shape ``(L*(L-1)*(L-2)*(L-3)//24, L)`` — one row per distinct
+        site quadruple.
     """
-    M: int = L * (L - 1) * (L - 2) * (L-3) // 2
+    M: int = L * (L - 1) * (L - 2) * (L - 3) // 24
     masks: NDArray[np.uint8] = np.zeros((M, L), dtype=np.uint8)
     idx: int = 0
     for i in range(L):
         for j in range(i + 1, L):
             for k in range(j + 1, L):
-                for l in range(k + 1, L):
+                for m in range(k + 1, L):
                     masks[idx, i] = 1
                     masks[idx, j] = 1
                     masks[idx, k] = 1
-                    masks[idx, l] = 1
+                    masks[idx, m] = 1
                     idx += 1
     return masks
+
 
 def random_masks(
     L: int,

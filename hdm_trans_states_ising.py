@@ -53,7 +53,7 @@ SUB_RNG: int = 12345
 m_subset: int = 2**N # All
 subset_mode: str = "top"
 subset_rng: int = 12345
-masks = 'w1_w2_w3_w4'
+masks = str(sys.argv[2])
 
 # Load masks
 masks_w1: NDArray[np.int_] = weight1_masks(N)
@@ -67,12 +67,18 @@ elif masks == 'w1':
     masks_all: NDArray[np.int_] = np.vstack((masks_w1))
 elif masks == 'w2':
     masks_all: NDArray[np.int_] = np.vstack((masks_w2))
+elif masks == 'w3':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w3))
+elif masks == 'w4':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w4))
 elif masks == 'w1_w2':
     masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2))
+elif masks == 'w2_w4':
+    masks_all: NDArray[np.int_] = np.vstack((masks_w2, masks_w4))
 elif masks == 'w1_w2_w3':
     masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
 elif masks == 'w1_w2_w3_w4':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
+    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3, masks_w4))
 else:
     raise ValueError('Not legal masks selection picked')
 

@@ -16,7 +16,7 @@ SAVE_DIR.mkdir(exist_ok=True, parents=True)
 # === PARAMETERS ===
 N: int = int(sys.argv[1])
 H_LIST: NDArray[np.float64] = np.linspace(0, 2, 200)
-masks: str = 'w1_w2_w3_w4'
+masks: str = str(sys.argv[2])
 # === LOOP ===
 overlaps: NDArray[np.float64] = []
 for h in H_LIST:
