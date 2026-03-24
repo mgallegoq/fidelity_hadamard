@@ -23,6 +23,8 @@ N : int
 
 import sys
 import pathlib
+import re
+import time
 
 import numpy as np
 from numpy.typing import NDArray
@@ -48,39 +50,39 @@ HADAMARD_DIR.mkdir(exist_ok=True, parents=True)
 # === PARAMETERS ===
 N: int = int(sys.argv[1])
 H_LIST: NDArray[np.float64] = np.linspace(0, 2, 200)
-Drand: int = 0
-SUB_RNG: int = 12345
-m_subset: int = 2**N # All
+SUB_RNG: int = int(time.time())
+m_subset: int = 2**N  # All
 subset_mode: str = "top"
 subset_rng: int = 12345
-masks = str(sys.argv[2])
+masks: str = str(sys.argv[2])
+
+# Parse Drand from mask name: "random_XX" → Drand=XX, anything else → Drand=0
+_random_match: re.Match[str] | None = re.fullmatch(r"random_(\d+)", masks)
+Drand: int = int(_random_match.group(1)) if _random_match else 0
 
 # Load masks
 masks_w1: NDArray[np.int_] = weight1_masks(N)
 masks_w2: NDArray[np.int_] = weight2_masks(N)
 masks_w3: NDArray[np.int_] = weight3_masks(N)
 masks_w4: NDArray[np.int_] = weight4_masks(N)
-masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=True, rng=SUB_RNG)
-if masks == 'full':
+masks_rand: NDArray[np.int_] = random_masks(N, Drand, low_bias=False, rng=SUB_RNG)
+np.save(f"../random_masks/random_masks_{int(_random_match.group(1))}.npy", masks_rand)
+
+_MASK_COMPONENTS: dict[str, NDArray[np.int_]] = {
+    "w1": masks_w1,
+    "w2": masks_w2,
+    "w3": masks_w3,
+    "w4": masks_w4,
+}
+
+if masks == "full":
     masks_all: NDArray[np.int_] = all_masks(N)
-elif masks == 'w1':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w1))
-elif masks == 'w2':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w2))
-elif masks == 'w3':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w3))
-elif masks == 'w4':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w4))
-elif masks == 'w1_w2':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2))
-elif masks == 'w2_w4':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w2, masks_w4))
-elif masks == 'w1_w2_w3':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3))
-elif masks == 'w1_w2_w3_w4':
-    masks_all: NDArray[np.int_] = np.vstack((masks_w1, masks_w2, masks_w3, masks_w4))
+elif _random_match is not None or masks == "random":
+    masks_all = masks_rand
+elif all(part in _MASK_COMPONENTS for part in masks.split("_")):
+    masks_all = np.vstack([_MASK_COMPONENTS[part] for part in masks.split("_")])
 else:
-    raise ValueError('Not legal masks selection picked')
+    raise ValueError(f"Unrecognised mask selection: '{masks}'")
 
 masks_idx: NDArray[np.intp] = masks_to_indices(masks_all)
 

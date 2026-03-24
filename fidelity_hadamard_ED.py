@@ -13,7 +13,7 @@ SAVE_DIR.mkdir(exist_ok=True, parents=True)
 N = int(sys.argv[1])
 H_LIST = np.linspace(0, 2, 200)
 fidelities: NDArray[np.float64] = []
-masks: str = 'w4'
+masks: str = str(sys.argv[2])
 
 
 for i, _ in tqdm(enumerate(H_LIST[:-1])):
